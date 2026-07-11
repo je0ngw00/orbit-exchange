@@ -1,0 +1,101 @@
+# orbit-exchange 로컬 인프라 (Phase 1)
+# 실행: repo 루트에서  make up   (또는  docker compose -f infra/docker-compose.yml up -d)
+#
+# 구성: Redpanda(Kafka 호환) + Console(UI) + Redis + PostgreSQL
+# ⚠️ 학습용 단일 노드. 운영 설정 아님.
+
+services:
+  # ────────────────────────────────────────────────────────────────
+  # Redpanda: Kafka 프로토콜 호환 브로커. ZooKeeper 불필요(KRaft 내장) → 단일 컨테이너로 끝.
+  # 리스너가 2개인 이유:
+  #   - internal(9092): 같은 도커 네트워크 안(console 등)에서 'redpanda:9092'로 접속
+  #   - external(19092): 호스트(내 Mac에서 도는 Spring 앱)에서 'localhost:9092'로 접속
+  # → 도커 안/밖 클라이언트가 각각 올바른 주소를 advertise 받아야 해서 분리한다. (공식 예제 기반)
+  # ────────────────────────────────────────────────────────────────
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.1
+    container_name: orbit-redpanda
+    command:
+      - redpanda
+      - start
+      - --smp=1                       # 사용할 CPU 코어 수(학습용 1개)
+      - --default-log-level=info
+      - --mode=dev-container           # 개발용 완화 설정(fsync 등) — 학습에 적합
+      # kafka 리스너: 컨테이너가 실제로 바인딩하는 주소
+      - --kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092
+      # advertise: 클라이언트에게 "여기로 접속해라"라고 알려주는 주소 (핵심!)
+      - --advertise-kafka-addr=internal://redpanda:9092,external://localhost:9092
+      - --rpc-addr=redpanda:33145
+      - --advertise-rpc-addr=redpanda:33145
+    ports:
+      - "9092:19092"   # 호스트 9092 → 컨테이너 external(19092). 앱은 localhost:9092로 접속
+      - "9644:9644"    # Admin API (헬스체크/관리)
+    volumes:
+      - redpanda-data:/var/lib/redpanda/data   # 데이터 영속화(재시작해도 토픽/메시지 유지)
+    healthcheck:
+      # 클러스터가 Healthy:true 인지 확인. 실패 시 unhealthy로 표시되고 depends_on이 대기.
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s   # 기동 초기 20초는 실패해도 눈감아줌(부팅 시간 확보)
+
+  # ────────────────────────────────────────────────────────────────
+  # Redpanda Console: 토픽/메시지를 눈으로 보는 웹 UI. 브라우저 http://localhost:8090
+  # 도커 네트워크 내부에서 브로커에 붙으므로 internal 주소(redpanda:9092) 사용.
+  # ────────────────────────────────────────────────────────────────
+  redpanda-console:
+    image: docker.redpanda.com/redpandadata/console:v2.8.0
+    container_name: orbit-redpanda-console
+    environment:
+      # 콘솔이 어느 브로커를 볼지 — 내부 리스너 주소
+      KAFKA_BROKERS: redpanda:9092
+    ports:
+      - "8090:8080"    # 호스트 8090 → 컨테이너 8080 (api의 8080과 충돌 회피)
+    depends_on:
+      redpanda:
+        condition: service_healthy   # redpanda가 healthy 된 뒤에 뜬다
+
+  # ────────────────────────────────────────────────────────────────
+  # Redis 7: 호가창 캐시/Pub-Sub 용(Phase 8). --appendonly yes 로 디스크 영속화 켠다
+  # (기본은 메모리만 → 재시작하면 데이터 날아감).
+  # ────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: orbit-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ────────────────────────────────────────────────────────────────
+  # PostgreSQL 16: 주문/거래 등 영속 저장(Phase 3+). DB/유저/비번 모두 orbit (학습용).
+  # ────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: orbit-postgres
+    environment:
+      POSTGRES_USER: orbit
+      POSTGRES_PASSWORD: orbit
+      POSTGRES_DB: orbit
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orbit -d orbit"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+# 명명된 볼륨: 컨테이너를 지워도(down) 데이터는 남는다. 완전 삭제는 down -v.
+volumes:
+  redpanda-data:
+  redis-data:
+  postgres-data:
