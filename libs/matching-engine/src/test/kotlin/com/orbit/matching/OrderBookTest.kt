@@ -27,4 +27,26 @@ class OrderBookTest {
         val expected = MatchResult.Success(emptyList(), order)
         assertEquals(expected, actual)
     }
+
+    @Test
+    fun `BUY 주문을 넣으면 bestBid가 그 가격`() {
+        //given
+        val orderBook = OrderBook()
+        val expected = BigDecimal.valueOf(1000L)
+        val order = Order(
+            id = 1L,
+            side = Side.BUY,
+            type = OrderType.LIMIT,
+            price = expected,
+            quantity = BigDecimal.valueOf(100L),
+            remaining = BigDecimal.valueOf(100L)
+        )
+
+        //when
+        orderBook.submit(order)
+        val actual = orderBook.bestBid()
+
+        //then
+        assertEquals(expected, actual)
+    }
 }
