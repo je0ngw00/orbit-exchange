@@ -13,6 +13,6 @@ class Bids {
     }
 
     fun bestBid(): BigDecimal? {
-        return orderQueue.firstKey()
+        return orderQueue.firstEntry()?.key
     }
 }
