@@ -12,6 +12,8 @@ class OrderBook() {
         bids.put(order);
         return MatchResult.Success(emptyList(), order)
     }
-    fun bestBid(): BigDecimal? = TODO()
+    fun bestBid(): BigDecimal? {
+        return bids.bestBid()
+    }
     fun bestAsk(): BigDecimal? = TODO()
 }

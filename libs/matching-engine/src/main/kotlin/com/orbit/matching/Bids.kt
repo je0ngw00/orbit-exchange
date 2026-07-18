@@ -11,4 +11,8 @@ class Bids {
         orders.addLast(order)
         return this
     }
+
+    fun bestBid(): BigDecimal? {
+        return orderQueue.firstEntry()?.key
+    }
 }
