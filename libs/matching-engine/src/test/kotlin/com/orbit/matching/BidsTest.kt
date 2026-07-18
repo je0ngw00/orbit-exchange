@@ -30,4 +30,10 @@ class BidsTest {
         assertEquals(expected, actual)
     }
 
+    @Test
+    fun `빈 호가창이면 bestBid는 null`() {
+        val bids = Bids()
+        assertNull(bids.bestBid())
+    }
+
 }
