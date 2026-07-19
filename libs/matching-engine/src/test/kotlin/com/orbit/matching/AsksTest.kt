@@ -4,12 +4,12 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 
-class BidsTest {
+class AsksTest {
 
     @Test
-    fun `최고의 매칭가격이 나온다`() {
+    fun `최저의 매칭가격이 나온다`() {
         //given
-        val orderBookSide = OrderBookSide(Side.BUY)
+        val orderBookSide = OrderBookSide(Side.SELL)
         for(i in 1..10) {
             val order = Order(
                 id = i.toLong(),
@@ -26,7 +26,7 @@ class BidsTest {
         val actual = orderBookSide.bestPrice()
 
         //then
-        val expected = BigDecimal.valueOf(10000L)
+        val expected = BigDecimal.valueOf(1000L)
         assertEquals(expected, actual)
     }
 

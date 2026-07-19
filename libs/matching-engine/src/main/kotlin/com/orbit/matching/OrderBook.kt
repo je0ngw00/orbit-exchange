@@ -1,19 +1,23 @@
 package com.orbit.matching
 
 import java.math.BigDecimal
-import java.util.TreeMap
 
-class OrderBook() {
+class OrderBook {
 
-    private val bids = Bids()
-    private val asks = TreeMap<BigDecimal, ArrayDeque<Order>>()
+    private val bids = OrderBookSide(Side.BUY)
+    private val asks = OrderBookSide(Side.SELL)
 
     fun submit(order: Order): MatchResult {
-        bids.put(order);
+        when (order.side) {
+            Side.BUY -> bids.put(order)
+            Side.SELL -> asks.put(order)
+        }
         return MatchResult.Success(emptyList(), order)
     }
     fun bestBid(): BigDecimal? {
-        return bids.bestBid()
+        return bids.bestPrice()
     }
-    fun bestAsk(): BigDecimal? = TODO()
+    fun bestAsk(): BigDecimal? {
+        return asks.bestPrice()
+    }
 }
