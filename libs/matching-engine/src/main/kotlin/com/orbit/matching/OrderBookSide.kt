@@ -5,7 +5,7 @@ import java.util.TreeMap
 import kotlin.collections.ArrayDeque
 import kotlin.collections.getOrPut
 
-class OrderBookSide (val side: Side) {
+class OrderBookSide (side: Side) {
     private val orderQueue = TreeMap<BigDecimal, ArrayDeque<Order>>(side.priceComparator)
 
     fun put(order: Order): OrderBookSide {

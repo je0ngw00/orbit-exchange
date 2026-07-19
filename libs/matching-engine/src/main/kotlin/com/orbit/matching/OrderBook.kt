@@ -2,7 +2,7 @@ package com.orbit.matching
 
 import java.math.BigDecimal
 
-class OrderBook() {
+class OrderBook {
 
     private val bids = OrderBookSide(Side.BUY)
     private val asks = OrderBookSide(Side.SELL)
