@@ -1,6 +1,8 @@
 package com.orbit.matching
 
-enum class Side(val label: String) {
-    BUY ("매수"),
-    SELL ("매도")
+import java.math.BigDecimal
+
+enum class Side(val label: String, val priceComparator: Comparator<BigDecimal>) {
+    BUY ("매수", reverseOrder()),
+    SELL ("매도", naturalOrder())
 }
