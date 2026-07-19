@@ -1,6 +1,7 @@
 package com.orbit.matching
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 
@@ -45,6 +46,28 @@ class OrderBookTest {
         //when
         orderBook.submit(order)
         val actual = orderBook.bestBid()
+
+        //then
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `SELL 주문을 넣으면 bestAsk가 그 가격`() {
+        //given
+        val orderBook = OrderBook()
+        val expected = BigDecimal.valueOf(500L)
+        val order = Order(
+            id = 1L,
+            side = Side.SELL,
+            type = OrderType.LIMIT,
+            price = expected,
+            quantity = BigDecimal.valueOf(100L),
+            remaining = BigDecimal.valueOf(100L)
+        )
+
+        //when
+        orderBook.submit(order)
+        val actual = orderBook.bestAsk()
 
         //then
         assertEquals(expected, actual)
