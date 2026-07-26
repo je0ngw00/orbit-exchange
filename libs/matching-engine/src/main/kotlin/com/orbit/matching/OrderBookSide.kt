@@ -3,9 +3,8 @@ package com.orbit.matching
 import java.math.BigDecimal
 import java.util.TreeMap
 import kotlin.collections.ArrayDeque
-import kotlin.collections.getOrPut
 
-class OrderBookSide (side: Side) {
+class OrderBookSide(side: Side) {
     private val orderQueue = TreeMap<BigDecimal, ArrayDeque<Order>>(side.priceComparator)
 
     fun put(order: Order): OrderBookSide {
@@ -17,4 +16,9 @@ class OrderBookSide (side: Side) {
     fun bestPrice(): BigDecimal? {
         return orderQueue.firstEntry()?.key
     }
+
+    fun bestOrder(): Order? {
+        return orderQueue.firstEntry()?.value?.first()
+    }
+
 }
