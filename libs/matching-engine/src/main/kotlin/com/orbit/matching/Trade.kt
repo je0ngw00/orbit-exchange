@@ -2,9 +2,10 @@ package com.orbit.matching
 
 import java.math.BigDecimal
 import java.time.ZonedDateTime
+import java.util.UUID
 
 data class Trade(
-    val id: Long,
+    val id: UUID,
     val takerOrderId: Long,
     val makerOrderId: Long,
     val price: BigDecimal,
