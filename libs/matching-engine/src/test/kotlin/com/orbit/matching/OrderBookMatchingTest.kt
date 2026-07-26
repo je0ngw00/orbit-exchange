@@ -1,7 +1,11 @@
 package com.orbit.matching
 
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
  * 매칭(체결) 시나리오 테스트.
@@ -10,15 +14,37 @@ import org.junit.jupiter.api.Test
 class OrderBookMatchingTest {
 
     @Test
-    @Disabled("매칭 로직 구현 후 활성화")
     fun `대기중인 SELL과 교차하는 BUY가 들어오면 완전 체결되고 책이 빈다`() {
         // given: 책에 SELL 0.5 @ 500만 대기
-        //   TODO: OrderBook 생성 + SELL 주문 submit
+        val orderBook = OrderBook()
+        val sell = Order(
+            id = 1L,
+            side = Side.SELL,
+            type = OrderType.LIMIT,
+            price = BigDecimal.valueOf(5_000_000L),
+            quantity = BigDecimal.valueOf(1L),
+            remaining = BigDecimal.valueOf(1L)
+        )
+        orderBook.submit(sell)
 
         // when: BUY 0.5 @ 500만 도착
-        //   TODO: BUY 주문 submit → 결과 받기
+        val buy = Order(
+            id = 2L,
+            side = Side.BUY,
+            type = OrderType.LIMIT,
+            price = BigDecimal.valueOf(5_000_000L),
+            quantity = BigDecimal.valueOf(1L),
+            remaining = BigDecimal.valueOf(1L)
+        )
+        val actual = orderBook.submit(buy)
 
         // then: Trade 1건(0.5 @ 500만), 둘 다 완전 체결, 책은 빔
-        //   TODO: 결과가 Success 이고 trades 1건인지, bestBid/bestAsk 가 null 인지 검증
+        assertTrue(actual is MatchResult.Success)
+        val success = actual as MatchResult.Success
+        assertEquals(1, success.trades.size)
+        assertEquals(0, success.trades[0].price.compareTo(BigDecimal.valueOf(5_000_000L)))
+        assertNull(success.remainingOrder)
+        assertNull(orderBook.bestBid())
+        assertNull(orderBook.bestAsk())
     }
 }
