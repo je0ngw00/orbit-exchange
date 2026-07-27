@@ -14,13 +14,10 @@ class OrderBook {
         when (order.side) {
             Side.BUY -> {
                 var remainingQty = order.remaining;
-                var lastOrder: Order? = null
                 while (remainingQty > BigDecimal.ZERO && asks.bestPrice() != null && asks.bestPrice()!! <= order.price) {
                     val maker = asks.bestOrder() ?: break;
                     val makeQty = remainingQty.min(maker.remaining)
-                    val madeOrder = maker.copy(remaining = maker.remaining - makeQty)
-                    lastOrder = madeOrder
-                    asks.put(madeOrder)
+                    asks.removeFirst()
                     trades += Trade(
                         id = UUID.randomUUID(),
                         takerOrderId = order.id,   // 방금 들어온 주문 = taker
@@ -33,7 +30,7 @@ class OrderBook {
                 }
                 if (remainingQty > BigDecimal.ZERO) {
                     bids.put(order)
-                    return MatchResult.Success(trades, lastOrder)
+                    return MatchResult.Success(trades, order.copy(remaining = remainingQty))
                 }
             }
 
