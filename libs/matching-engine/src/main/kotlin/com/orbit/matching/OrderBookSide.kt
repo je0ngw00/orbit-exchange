@@ -22,9 +22,10 @@ class OrderBookSide(side: Side) {
     }
 
     fun removeFirst() {
-        val pollFirstEntry = orderQueue.pollFirstEntry()
-        if (orderQueue.firstEntry()?.value?.isEmpty() == true) {
-            orderQueue.remove(pollFirstEntry.key)
+        val queue = orderQueue.firstEntry()?.value ?: return
+        queue.removeFirst()
+        if (queue.isEmpty()) {
+            orderQueue.remove(orderQueue.firstKey())
         }
     }
 
