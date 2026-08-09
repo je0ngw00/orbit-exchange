@@ -1,7 +1,6 @@
 package com.orbit.matching
 
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import kotlin.test.assertEquals
@@ -10,13 +9,13 @@ import kotlin.test.assertNull
 
 /**
  * 매칭(체결) 시나리오 테스트.
- * 아직 매칭 로직 미구현 → @Disabled. 다음 단계에서 내용 채우고 활성화(@Disabled 제거).
+ * Price-Time Priority: 좋은 가격 우선, 같은 가격이면 먼저 들어온 주문(FIFO) 우선.
  */
 class OrderBookMatchingTest {
 
     @Test
     fun `대기중인 SELL과 교차하는 BUY가 들어오면 완전 체결되고 책이 빈다`() {
-        // given: 책에 SELL 0.5 @ 500만 대기
+        // given: 책에 SELL 1 @ 500만 대기
         val orderBook = OrderBook()
         val sell = Order(
             id = 1L,
@@ -28,7 +27,7 @@ class OrderBookMatchingTest {
         )
         orderBook.submit(sell)
 
-        // when: BUY 0.5 @ 500만 도착
+        // when: BUY 1 @ 500만 도착
         val buy = Order(
             id = 2L,
             side = Side.BUY,
@@ -39,7 +38,7 @@ class OrderBookMatchingTest {
         )
         val actual = orderBook.submit(buy)
 
-        // then: Trade 1건(0.5 @ 500만), 둘 다 완전 체결, 책은 빔
+        // then: Trade 1건(1 @ 500만), 둘 다 완전 체결, 책은 빔
         assertTrue(actual is MatchResult.Success)
         val success = actual as MatchResult.Success
         assertEquals(1, success.trades.size)
@@ -51,7 +50,7 @@ class OrderBookMatchingTest {
 
     @Test
     fun `같은 가격에 SELL 2개가 대기중이면 BUY 1개는 먼저 온 것과만 체결된다`() {
-        // given: 책에 SELL 0.5 @ 500만 대기
+        // given: 같은 가격 500만에 SELL 1 두 건 대기 (id=1이 먼저 들어옴)
         val orderBook = OrderBook()
         var sell = Order(
             id = 1L,
@@ -73,7 +72,7 @@ class OrderBookMatchingTest {
         )
         orderBook.submit(sell)
 
-        // when: BUY 0.5 @ 500만 도착
+        // when: BUY 1 @ 500만 도착
         val buy = Order(
             id = 3L,
             side = Side.BUY,
@@ -84,7 +83,7 @@ class OrderBookMatchingTest {
         )
         val actual = orderBook.submit(buy)
 
-        // then: Trade 1건(0.5 @ 500만), 둘 다 완전 체결, 책은 빔
+        // then: Trade 1건(1 @ 500만), 먼저 온 sell(id=1)과 체결, 두 번째 sell은 책에 남음
         assertTrue(actual is MatchResult.Success)
         val success = actual as MatchResult.Success
         assertEquals(1, success.trades.size)
