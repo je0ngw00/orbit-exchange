@@ -2,7 +2,8 @@ package com.orbit.matching
 
 import java.math.BigDecimal
 import java.time.ZonedDateTime
-import java.util.*
+import java.util.UUID
+
 
 class OrderBook {
 
@@ -13,9 +14,12 @@ class OrderBook {
         val trades = mutableListOf<Trade>()
         when (order.side) {
             Side.BUY -> {
-                var remainingQty = order.remaining;
-                while (remainingQty > BigDecimal.ZERO && asks.bestPrice() != null && asks.bestPrice()!! <= order.price) {
-                    val maker = asks.bestOrder() ?: break;
+                var remainingQty = order.remaining
+                while (remainingQty > BigDecimal.ZERO) {
+                    val bestPrice = asks.bestPrice() ?: break
+                    if(bestPrice > order.price) break
+
+                    val maker = asks.bestOrder() ?: break
                     val makeQty = remainingQty.min(maker.remaining)
                     asks.removeFirst()
                     trades += Trade(
